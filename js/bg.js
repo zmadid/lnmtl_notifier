@@ -193,7 +193,6 @@ function checkForLatestChapter(){
 
 document.addEventListener('process_responses', function(){
 			gNovelList.sort(compareNovel);
-			sendResponse(gNovelList);
 }, false);
 
 chrome.notifications.onClicked.addListener(function (notificationId){
@@ -237,9 +236,22 @@ chrome.runtime.onStartup.addListener(function(){
 	console.log("I am started!");
 	retrieveNovelList();
 	retrievePrefListFromCache();
+	
+	var alarmInfo ={when: Date.now(), periodInMinutes: 5};
+	chrome.alarms.create("auto-check-update", alarmInfo);
 });
 
 chrome.runtime.onInstalled.addListener(function(){
 	console.log("I am installed!");
 	retrieveNovelList();
+	
+	var alarmInfo ={when: Date.now(), periodInMinutes: 1};
+	chrome.alarms.create("auto-check-update", alarmInfo);
+});
+
+chrome.alarms.onAlarm.addListener(function(alarm){
+	if(alarm.name === "auto-check-update" ){
+		console.log("Alarm called!");
+		checkForLatestChapter();
+	}
 });

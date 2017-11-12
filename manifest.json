@@ -1,7 +1,7 @@
 {
   "name": "LNMTL Update Notifier",
   "description": "Generate a notification each time a new chapter is released.",
-  "version": "0.1",
+  "version": "0.0.0.1",
   "manifest_version": 2,
   "browser_action": {
     "default_icon": "images/alarm-32.png",
@@ -10,7 +10,7 @@
   },
   "background": {
     "scripts": ["js/bg.js"],
-	"persistent": false
+	"persistent": true
   },
   "permissions": [
     "activeTab",
@@ -19,5 +19,5 @@
 	"notifications",
 	"https://lnmtl.com/"
   ],
-  "icons": { "16": "images/calculator-16.png", "128": "images/calculator-128.png" }
+  "icons": {"128": "images/alarm-32.png" }
 }
