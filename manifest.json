@@ -9,7 +9,8 @@
 	"default_title": "LNMTL Update Notifier!"
   },
   "background": {
-    "scripts": ["js/jquery.js"]
+    "scripts": ["js/bg.js"],
+	"persistent": false
   },
   "permissions": [
     "activeTab",

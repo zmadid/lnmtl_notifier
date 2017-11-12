@@ -41,7 +41,6 @@ function getNovelIndex(name, novelList){
 
 function showNotif(id, novelInfo, message){
 	console.log("showNotif for " + novelInfo.name);
-	
 	var opt = {
 		  type: "basic",
 		  title: novelInfo.name,
@@ -49,7 +48,6 @@ function showNotif(id, novelInfo, message){
 		  iconUrl: novelInfo.img,
 		  isClickable: true,
 		  requireInteraction: true
-		  /* iconUrl: "../images/icon.png" */
 		}
 	notif = chrome.notifications.create( id ,opt);
 }
@@ -92,7 +90,7 @@ function processHttpResponse(response, param){
 	}
 }
 	
-function RetrieveNovelList(){
+function retrieveNovelList(){
 	var client = new HttpClient();
 	//Sending Asynchronous request to the server
 	for(var pageNum = 1; pageNum < 11 ; ++pageNum){
@@ -102,64 +100,14 @@ function RetrieveNovelList(){
 	}	
 }
 
-function buildNovelSelectBox(){
-	// Create a select box
-	var novels = document.getElementById('novel-list');
-	
-	var sel = document.getElementById('select-novel');
-	if( sel == null){
-		var sel = document.createElement('select');
-		sel.name = "NovelList";
-		sel.id = "select-novel";
-	}
-	gNovelList.sort(compareNovel);
-	console.log(gNovelList);
-	for (var i = 0, l = gNovelList.length; i < l; ++i) {
-		var opt = document.createElement('option');
-		opt.value = i;
-		opt.innerHTML = gNovelList[i].name;
-		sel.appendChild(opt);
-	}
-	novels.appendChild(sel);
-	
-	
-	// Create an Add button to add Novel to the preference list
-	var addButton = document.createElement('div');
-	addButton.innerHTML = "Add";
-	addButton.id = "AddButton";
-	addButton.setAttribute('class', 'button');
-	novels.appendChild(addButton);
-	addButton.addEventListener("click", AddToPrefList, true);
-	
-}
-
-
-function AddToPrefList(){
+function AddToPrefList(index){
 	//console.log("AddToPrefList");
-	var sel = document.getElementById('select-novel')
-	console.log("Adding index "+ sel.selectedIndex+ " with title: " + sel.options[sel.selectedIndex].innerHTML );
-	if(!hasNovel(gNovelList[sel.selectedIndex], gPrefNovelList))
-		gPrefNovelList.push(gNovelList[sel.selectedIndex]);
+	var sel = document.getElementById('select-novel');
+	console.log("Adding index "+ index);
+	if(!hasNovel(gNovelList[index], gPrefNovelList))
+		gPrefNovelList.push(gNovelList[index]);
 
 	savePrefListToCache();
-	displayPrefList();
-}
-
-function displayPrefList(){
-	//console.log("displayPrefList");
-	var el = document.getElementById("pref-novel");
-	while (el.firstChild) {
-	  el.removeChild(el.firstChild);
-	}
-	
-	if(gPrefNovelList.length == 0)
-		return;
-
-	for(var i = 0, l = gPrefNovelList.length; i<l; ++i){
-		var novel = document.createElement('div');
-		novel.innerHTML = gPrefNovelList[i].name;
-		el.appendChild(novel);
-	}
 }
 
 function savePrefListToCache(){
@@ -173,12 +121,10 @@ function savePrefListToCache(){
 // Retrieve the object from storage
 function retrievePrefListFromCache(){
 	var storage = chrome.storage.local.get('novelList', function (result) {
-		//console.log(result);
 		for(var nov in result){
 			gPrefNovelList = result[nov];
 			console.log(gPrefNovelList.length + " elements retrieved.");
 		}
-		displayPrefList();
 	});
 }
 
@@ -186,11 +132,11 @@ function clearPrefList(){
 	//console.log("clearing all pref");
 	chrome.storage.local.remove('novelList');
 	gPrefNovelList.length = 0;
-	displayPrefList();
+	//displayPrefList();
 }
 
-function processLastestHttpResponse(response, novelIndex){
-	//console.log("processLastestHttpResponse");
+function latestChapterHttpResponse(response, novelIndex){
+	//console.log("latestChapterHttpResponse");
 	var el = document.createElement('html');
 	el.innerHTML = response;
 	var medias = el.getElementsByClassName( 'col-lg-9 col-md-8' );
@@ -239,51 +185,61 @@ function checkForLatestChapter(){
 		var client = new HttpClient();
 		//Sending Asynchronous request to the server
 		client.get(gPrefNovelList[index].url, function(response, index){
-			processLastestHttpResponse(response, index);
+			latestChapterHttpResponse(response, index);
 		}, index);	
 	}
 }
 
-function init() {
-    console.log("DOM fully loaded and parsed");
 
-	// Listen for the event.
-	// Build a select box and append it to the document
-	document.addEventListener('process_responses', buildNovelSelectBox, false);
+document.addEventListener('process_responses', function(){
+			gNovelList.sort(compareNovel);
+			sendResponse(gNovelList);
+}, false);
 
-	// Get the list of novel to display for the user
-	RetrieveNovelList();
-		
-	retrievePrefListFromCache();
-	document.getElementById("clear").addEventListener("click", clearPrefList , true);
-	
-	document.getElementById("check").addEventListener("click", checkForLatestChapter, true);
-	
-	document.getElementById("display").addEventListener("click", function(){ 
-		console.log("Logging Prefered novel "+ gPrefNovelList);
-		}, true);
-	
-};
+chrome.notifications.onClicked.addListener(function (notificationId){
+	var novelIndex = getNovelIndex(notificationId, gPrefNovelList);
+	if(novelIndex === undefined){
+		alert("Favorite has been updated");
+		return;
+	}
+	console.log("notification clicked for " + gPrefNovelList[novelIndex].name);
+	window.open(gPrefNovelList[novelIndex].url);
+	chrome.notifications.clear(notificationId);
+	});
 
-
-document.addEventListener("DOMContentLoaded", init, false);
-
-/* 
-document.addEventListener("load", function() {
-	window.open("https://lnmtl.com/novel/against-the-gods");
-	chrome.notifications.onClicked.addListener(function (notificationId){
-		window.open("https://lnmtl.com/novel/against-the-gods");
-		retrievePrefListFromCache();
-		var novelIndex = getNovelIndex(notificationId, gPrefNovelList);
-		if(novelIndex === undefined){
-			return;
+chrome.runtime.onMessage.addListener(
+	function(request, sender, sendResponse) {
+		if(request.type === "get-novel-list"){
+			console.log("length " + gNovelList.length);
+			if(gNovelList.length === 0)
+				retrieveNovelList();
+			gNovelList.sort(compareNovel);
+			sendResponse(gNovelList);
+		} else if(request.type === "get-favorite-list"){
+			console.log("adding " + request);
+			sendResponse(gPrefNovelList);
+		}else if(request.type === "addto-favorite-list"){
+			console.log("adding " + request);
+			AddToPrefList(request.index);
+			sendResponse(gPrefNovelList);
+		} else if(request.type === "clear-favorite-list"){
+			console.log("clearing favorite");
+			clearPrefList();
+			sendResponse(gPrefNovelList);
+		} else if(request.type === "check-update"){
+			checkForLatestChapter();
+			sendResponse();
 		}
-		console.log("notification clicked for " + gPrefNovelList[novelIndex].name);
-		window.open(gPrefNovelList[novelIndex].url);
-		chrome.notifications.clear(notificationId);
-		});
-}, false); 
-*/
+  });
+  
 
+chrome.runtime.onStartup.addListener(function(){
+	console.log("I am started!");
+	retrieveNovelList();
+	retrievePrefListFromCache();
+});
 
-
+chrome.runtime.onInstalled.addListener(function(){
+	console.log("I am installed!");
+	retrieveNovelList();
+});
