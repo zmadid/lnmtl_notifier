@@ -1,8 +1,10 @@
 <html>
 <head>
+<link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" 
+integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
 <style>
 .panel-header{
-    background-color: #007FFF;
+    background-color: rgb(66, 184, 221);
     border: none;
     color: white;
 	padding: 15px 32px;
@@ -10,28 +12,28 @@
     text-decoration: none;
     display: inline-block;
     font-size: 18px;
-	width: 80%;
+	width: 90%;
 }
-.button {
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 15px;
-    cursor: pointer;
-	width: 60px;
-	height: 30px;
-	padding: 8px 0px 0px 0px;
+.button-clear {
+    background: rgb(202, 60, 60); /* this is a maroon */
 }
+.button-add {
+    background: rgb(28, 184, 65); /* this is a green */
+}
+.button-remove {
+	background: rgb(223, 117, 20); /* this is an orange */
+}
+
+select-novel{
+	font-size: 16px;
+}
+
 html {
     position: relative;
     min-width: 400px;
-    min-height: 500px;
+    max-height: 500px;
     height: 100%;
 }
-
 </style>
 </head>
 <body>
@@ -48,8 +50,8 @@ html {
 	<div id="pref-novel">
 	</div>
 	<div id="actions"> 
-		<div id="check" class="button"> Check </div>
-		<div id="clear" class="button" style="background-color: #FF0000"> Clear </div>
+		<div id="check" class="pure-button button-add"> Check </div>
+		<div id="clear" class="pure-button button-clear"> Clear </div>
 	</div>
 </div>
 </body>

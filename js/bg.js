@@ -21,11 +21,11 @@ function compareNovel(a, b){
 		var nameB = b.name.toUpperCase(); // ignore upper and lowercase
 		if (nameA < nameB){
 			return -1;
-		}
-		if (nameA > nameB){
+		} else if (nameA > nameB){
 			return 1;
-		}
-		return 0;
+		} else{
+			return 0;
+		}	
 }
 
 function hasNovel(novel, novelList){
@@ -135,6 +135,11 @@ function clearPrefList(){
 	//displayPrefList();
 }
 
+function clearNovel(index){
+	gPrefNovelList.splice(index, 1);
+	savePrefListToCache();
+}
+
 function latestChapterHttpResponse(response, novelIndex){
 	//console.log("latestChapterHttpResponse");
 	var el = document.createElement('html');
@@ -208,45 +213,63 @@ chrome.notifications.onClicked.addListener(function (notificationId){
 
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
-		if(request.type === "get-novel-list"){
-			console.log("length " + gNovelList.length);
-			if(gNovelList.length === 0)
-				retrieveNovelList();
-			gNovelList.sort(compareNovel);
-			sendResponse(gNovelList);
-		} else if(request.type === "get-favorite-list"){
-			console.log("adding " + request);
-			sendResponse(gPrefNovelList);
-		}else if(request.type === "addto-favorite-list"){
-			console.log("adding " + request);
-			AddToPrefList(request.index);
-			sendResponse(gPrefNovelList);
-		} else if(request.type === "clear-favorite-list"){
-			console.log("clearing favorite");
-			clearPrefList();
-			sendResponse(gPrefNovelList);
-		} else if(request.type === "check-update"){
-			checkForLatestChapter();
-			sendResponse();
+		switch(request.type){
+			case "get-novel-list":
+				console.log("length " + gNovelList.length);
+				if(gNovelList.length === 0)
+					retrieveNovelList();
+				sendResponse(gNovelList);
+				break;
+			case "get-favorite-list":
+				console.log("adding " + request);
+				sendResponse(gPrefNovelList);
+				break;
+			case "addto-favorite-list":
+				console.log("adding " + request);
+				AddToPrefList(request.index);
+				sendResponse(gPrefNovelList);
+				break;
+			case "clear-favorite-list":
+				console.log("clearing favorite");
+				clearPrefList();
+				sendResponse(gPrefNovelList);
+				break;
+			case "remove-novel":
+				console.log("clearing novel " + request.index);
+				clearNovel(request.index);
+				sendResponse(gPrefNovelList);
+			case "check-update":
+				checkForLatestChapter();
+				sendResponse();
+				break;
+			default:
+				alert("Request not supported " + request.type);
+				sendResponse();
 		}
   });
   
 
-chrome.runtime.onStartup.addListener(function(){
-	console.log("I am started!");
+function init(){
 	retrieveNovelList();
-	retrievePrefListFromCache();
-	
+	checkNotifPremission();
 	var alarmInfo ={when: Date.now(), periodInMinutes: 5};
 	chrome.alarms.create("auto-check-update", alarmInfo);
+}
+
+function checkNotifPremission(){
+	
+}
+
+chrome.runtime.onStartup.addListener(function(){
+	console.log("I am started!");
+	retrievePrefListFromCache();
+	
+	init();
 });
 
 chrome.runtime.onInstalled.addListener(function(){
 	console.log("I am installed!");
-	retrieveNovelList();
-	
-	var alarmInfo ={when: Date.now(), periodInMinutes: 1};
-	chrome.alarms.create("auto-check-update", alarmInfo);
+	init();
 });
 
 chrome.alarms.onAlarm.addListener(function(alarm){

@@ -1,13 +1,13 @@
 function compareNovel(a, b){
-		var nameA = a.name.toUpperCase(); // ignore upper and lowercase
-		var nameB = b.name.toUpperCase(); // ignore upper and lowercase
-		if (nameA < nameB){
-			return -1;
-		}
-		if (nameA > nameB){
-			return 1;
-		}
+	var nameA = a.name.toUpperCase(); // ignore upper and lowercase
+	var nameB = b.name.toUpperCase(); // ignore upper and lowercase
+	if (nameA < nameB){
+		return -1;
+	} else if (nameA > nameB){
+		return 1;
+	} else {
 		return 0;
+	}	
 }
 
 function buildNovelSelectBox(gNovelList){
@@ -19,6 +19,7 @@ function buildNovelSelectBox(gNovelList){
 		var sel = document.createElement('select');
 		sel.name = "NovelList";
 		sel.id = "select-novel";
+		sel.setAttribute('class', 'select-novel');
 	}
 	gNovelList.sort(compareNovel);
 	for (var i = 0, l = gNovelList.length; i < l; ++i) {
@@ -34,7 +35,7 @@ function buildNovelSelectBox(gNovelList){
 	var addButton = document.createElement('div');
 	addButton.innerHTML = "Add";
 	addButton.id = "AddButton";
-	addButton.setAttribute('class', 'button');
+	addButton.setAttribute('class', 'pure-button button-add');
 	novels.appendChild(addButton);
 	addButton.addEventListener("click", addToFavoriteNovelList, true);
 	
@@ -60,11 +61,39 @@ function displayPrefList(gPrefNovelList){
 	if(gPrefNovelList.length == 0)
 		return;
 
+	// Create a table
+	var table = document.createElement('table');
+	table.setAttribute('class', 'pure-table');
+	var tbody = document.createElement('tbody');
+	var odd = true;
 	for(var i = 0, l = gPrefNovelList.length; i<l; ++i){
-		var novel = document.createElement('div');
-		novel.innerHTML = gPrefNovelList[i].name;
-		el.appendChild(novel);
+		var tr = document.createElement('tr');
+		if(odd){
+			tr.setAttribute('class', 'pure-table-odd');
+		}
+		var td_1 = document.createElement('td');
+		td_1.innerHTML = gPrefNovelList[i].name;
+		var td_2 = document.createElement('td');
+		td_2.setAttribute('class', 'pure-button');
+		td_2.innerHTML = 'remove';
+		
+		td_2.addEventListener("click", clearNovel, true);
+		
+		tr.appendChild(td_1);
+		tr.appendChild(td_2);
+		tbody.appendChild(tr);
+		
+		odd = !odd;
 	}
+	table.appendChild(tbody);
+	el.appendChild(table);
+}
+
+function clearNovel(e){
+	chrome.runtime.sendMessage({type: "remove-novel", index: e.target.parentNode.rowIndex}, function(response) {
+	  console.log(response);
+	  displayPrefList(response);
+	});
 }
 
 function getNovelList(){
