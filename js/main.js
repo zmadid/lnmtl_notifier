@@ -33,9 +33,10 @@ function buildNovelSelectBox(gNovelList){
 	
 	// Create an Add button to add Novel to the preference list
 	var addButton = document.createElement('div');
-	addButton.innerHTML = "Add";
+	addButton.innerHTML = '<i class="fa fa-archive" aria-hidden="true"></i> Add';
 	addButton.id = "AddButton";
 	addButton.setAttribute('class', 'pure-button button-add');
+	addButton.setAttribute('title', 'Add to favorite list');
 	novels.appendChild(addButton);
 	addButton.addEventListener("click", addToFavoriteNovelList, true);
 	
@@ -75,7 +76,9 @@ function displayPrefList(gPrefNovelList){
 		td_1.innerHTML = gPrefNovelList[i].name;
 		var td_2 = document.createElement('td');
 		td_2.setAttribute('class', 'pure-button');
-		td_2.innerHTML = 'remove';
+		td_2.setAttribute('title', 'Remove from favorite');
+		td_2.innerHTML = '<i class="fa fa-eraser" aria-hidden="true"></i> remove';
+		
 		
 		td_2.addEventListener("click", clearNovel, true);
 		
