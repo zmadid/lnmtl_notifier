@@ -40,22 +40,36 @@ html {
 <body>
 <script src="js/main.js"></script>
 
+<div class="tab">
+  <button id="display-novels" class="pure-button">lnmtl novels</button>
+  <button id="display-help"class="pure-button">help</button>
+</div>
 
-<div id="select">
-	<div class="panel-header"> Select a novel </div>
-	<div id="novel-list"> 
+<div id="lnmtl-novel" class="tab-content">
+	<div id="select">
+		<div class="panel-header"> Select a novel </div>
+		<div id="novel-list"> 
+		<div id="refresh" class="pure-button button-add" title="Refresh novel list"> 
+				<i class="fa fa-refresh" aria-hidden="true"></i> </div>
+		</div>
+	</div>
+	<div id="Favorite"> 
+		<div class="panel-header"> Favorite novels </div>
+		<div id="pref-novel">
+		</div>
+		<div id="actions"> 
+			<div id="check" class="pure-button button-add" title="Check for updates"> 
+				<i class="fa fa-refresh" aria-hidden="true"></i> Check </div>
+			<div id="clear" class="pure-button button-clear"title="Clear all favorite"> <i class="fa fa-times" aria-hidden="true"></i> Clear </div>
+		</div>
+		
 	</div>
 </div>
-<div id="Favorite"> 
-	<div class="panel-header"> Favorite novels </div>
-	<div id="pref-novel">
-	</div>
-	<div id="actions"> 
-		<div id="check" class="pure-button button-add" title="Check for updates"> 
-			<i class="fa fa-refresh" aria-hidden="true"></i> Check </div>
-		<div id="clear" class="pure-button button-clear"title="Clear all favorite"> <i class="fa fa-times" aria-hidden="true"></i> Clear </div>
-	</div>
-	
+
+<div id="help" class="tab-content" style="display: none;">
+	<div>1. Select the novel </div>
+	<div>2. Add the novel to your favorite list</div>
+	<div>3. Get a window's notification if a new chapter has been released in the last 5 min.</div>
 </div>
 
 </body>

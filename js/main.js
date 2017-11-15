@@ -22,6 +22,9 @@ function buildNovelSelectBox(gNovelList){
 		sel.setAttribute('class', 'select-novel');
 	}
 	gNovelList.sort(compareNovel);
+	while (sel.firstChild){
+		sel.removeChild(sel.firstChild);
+	}
 	for (var i = 0, l = gNovelList.length; i < l; ++i) {
 		var opt = document.createElement('option');
 		opt.value = i;
@@ -32,14 +35,16 @@ function buildNovelSelectBox(gNovelList){
 	
 	
 	// Create an Add button to add Novel to the preference list
-	var addButton = document.createElement('div');
-	addButton.innerHTML = '<i class="fa fa-archive" aria-hidden="true"></i> Add';
-	addButton.id = "AddButton";
-	addButton.setAttribute('class', 'pure-button button-add');
-	addButton.setAttribute('title', 'Add to favorite list');
+	var addButton = document.getElementById('add-novel');
+	if(addButton == null){
+		addButton = document.createElement('div');
+		addButton.innerHTML = '<i class="fa fa-archive" aria-hidden="true"></i> Add';
+		addButton.id = "add-novel";
+		addButton.setAttribute('class', 'pure-button button-add');
+		addButton.setAttribute('title', 'Add to favorite list');
+		addButton.addEventListener("click", addToFavoriteNovelList, true);
+	}
 	novels.appendChild(addButton);
-	addButton.addEventListener("click", addToFavoriteNovelList, true);
-	
 }
 
 function addToFavoriteNovelList(){
@@ -74,16 +79,25 @@ function displayPrefList(gPrefNovelList){
 		}
 		var td_1 = document.createElement('td');
 		td_1.innerHTML = gPrefNovelList[i].name;
+		
 		var td_2 = document.createElement('td');
-		td_2.setAttribute('class', 'pure-button');
-		td_2.setAttribute('title', 'Remove from favorite');
-		td_2.innerHTML = '<i class="fa fa-eraser" aria-hidden="true"></i> remove';
+		var novel_link = document.createElement('a');
+		novel_link.innerHTML = "view";
+		novel_link.setAttribute('href', gPrefNovelList[i].url);
+		novel_link.setAttribute('title', 'novel link');
+		td_2.appendChild(novel_link);
+		
+		var td_3 = document.createElement('td');
+		td_3.setAttribute('class', 'pure-button');
+		td_3.setAttribute('title', 'Remove from favorite');
+		td_3.innerHTML = '<i class="fa fa-eraser" aria-hidden="true"></i> remove';
 		
 		
-		td_2.addEventListener("click", clearNovel, true);
+		td_3.addEventListener("click", clearNovel, true);
 		
 		tr.appendChild(td_1);
 		tr.appendChild(td_2);
+		tr.appendChild(td_3);
 		tbody.appendChild(tr);
 		
 		odd = !odd;
@@ -106,37 +120,72 @@ function getNovelList(){
 	});
 }
 
+processing = true;
+function refreshNovelList(){
+	
+	chrome.runtime.sendMessage({type: "refresh-novel-list"}, function(response) {
+		console.log(response);
+		processing = false;
+	});
+}
+
 function getFavoriteList(){
 	chrome.runtime.sendMessage({type: "get-favorite-list"}, function(response) {
-	  console.log(response);
-	  displayPrefList(response);
+		console.log(response);
+		displayPrefList(response);
 	});
 }
 
 function clearFavoriteList(){
 	chrome.runtime.sendMessage({type: "clear-favorite-list"}, function(response) {
-	  console.log(response);
-	  displayPrefList(response);
+		console.log(response);
+		displayPrefList(response);
 	});
 }
 
 function checkUpdate(){
 	chrome.runtime.sendMessage({type: "check-update"}, function(response) {
-	  console.log(response);
+		console.log(response);
 	});
 }
 
+function hideAllTabs(){
+	var tabs = document.getElementsByClassName('tab-content');
+	for( var i = 0, l = tabs.length; i < l;  ++i){
+		tabs[i].setAttribute('style', 'display: none;');
+	}
+}
 function start() {
     console.log("DOM fully loaded and parsed");
 	var info = { name: "main"};
 	getNovelList();
 	getFavoriteList();	
 	
+	document.getElementById("refresh").addEventListener("click", refreshNovelList , true);
+	
 	document.getElementById("clear").addEventListener("click", clearFavoriteList , true);
 	
 	document.getElementById("check").addEventListener("click", checkUpdate, true);
 	
+	document.getElementById("display-help").addEventListener("click", function(){
+		hideAllTabs();
+		document.getElementById('help').setAttribute('style', '');
+		}, true);
+	document.getElementById("display-novels").addEventListener("click", function(){
+		hideAllTabs();
+		document.getElementById('lnmtl-novel').setAttribute('style', '');
+		}, true);
+	
 };
 
 document.addEventListener("DOMContentLoaded", start, false);
+
+chrome.runtime.onMessage.addListener(
+	function(request, sender, sendResponse) {
+	if(request.type === "push-novel-list"){
+		//console.log("push received"+ request.content);
+		buildNovelSelectBox(request.content);
+		sendResponse("Novel list received");
+	}
+});
 

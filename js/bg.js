@@ -1,5 +1,5 @@
 gNovelList = [];
-gContentRetreived = [0,0,0,0,0,0,0,0,0,0];
+gContentRetrieved = [0,0,0,0,0,0,0,0,0,0];
 gPrefNovelList = [];
 
 function NovelInfo (aName, aUrl){
@@ -40,7 +40,6 @@ function getNovelIndex(name, novelList){
 }
 
 function showNotif(id, novelInfo, message){
-	console.log("showNotif for " + novelInfo.name);
 	var opt = {
 		  type: "basic",
 		  title: novelInfo.name,
@@ -79,11 +78,11 @@ function processHttpResponse(response, param){
 		opt.fillFromMedia(mediaInfo);
 		gNovelList.push(opt);
 	}
-	console.log("Response retrieved for page " + param);
-	gContentRetreived[param-1] = 1;
-	
+	gContentRetrieved[param-1] = 1;
+	//console.log("Response retrieved for page " + param);
+	//console.log("content retrieved updated " + gContentRetrieved);
 	// When all asynchronous calls are finished, fire an even to start processing the all the responses receives.
-	if(gContentRetreived.every(x => x == 1)){
+	if(gContentRetrieved.every(x => x === 1)){
 		console.log( "All responses received.  !");
 		gEv_process = new Event('process_responses');
 		document.dispatchEvent(gEv_process);
@@ -91,27 +90,25 @@ function processHttpResponse(response, param){
 }
 	
 function retrieveNovelList(){
+	console.log(gContentRetrieved);
 	var client = new HttpClient();
 	//Sending Asynchronous request to the server
 	for(var pageNum = 1; pageNum < 11 ; ++pageNum){
 		client.get("https://lnmtl.com/novel?orderBy=name&order=asc&page=" + pageNum, function(response, pageNum){
 			processHttpResponse(response, pageNum);
 		}, pageNum);
-	}	
+	}
 }
 
 function AddToPrefList(index){
 	//console.log("AddToPrefList");
-	var sel = document.getElementById('select-novel');
 	console.log("Adding index "+ index);
-	if(!hasNovel(gNovelList[index], gPrefNovelList))
-		gPrefNovelList.push(gNovelList[index]);
-
+	gPrefNovelList.push(gNovelList[index]);
 	savePrefListToCache();
 }
 
 function savePrefListToCache(){
-	console.log("savePrefListToCache");
+	//console.log("savePrefListToCache");
 	// Put the object into storage
 	chrome.storage.local.set({"novelList": gPrefNovelList},  function() {
 		//console.log('Settings saved');
@@ -123,7 +120,7 @@ function retrievePrefListFromCache(){
 	var storage = chrome.storage.local.get('novelList', function (result) {
 		for(var nov in result){
 			gPrefNovelList = result[nov];
-			console.log(gPrefNovelList.length + " elements retrieved.");
+			//console.log(gPrefNovelList.length + " elements retrieved.");
 		}
 	});
 }
@@ -140,7 +137,7 @@ function clearNovel(index){
 	savePrefListToCache();
 }
 
-function latestChapterHttpResponse(response, novelIndex){
+function latestChapterHttpResponse(response, input){
 	//console.log("latestChapterHttpResponse");
 	var el = document.createElement('html');
 	el.innerHTML = response;
@@ -150,7 +147,7 @@ function latestChapterHttpResponse(response, novelIndex){
 		medias[0].getElementsByClassName('panel-title')&&
 		medias[0].getElementsByClassName('panel-title').length === 0
 		){
-		console.log('No Lastest for ' + gPrefNovelList[novelIndex].name);
+		console.log('No Lastest for ' + gPrefNovelList[input.index].name);
 		return ;	
 	}	
 		
@@ -167,37 +164,51 @@ function latestChapterHttpResponse(response, novelIndex){
 		var chapUrl = latest.getElementsByTagName('a')[0].getAttribute('href');
 		
 		console.log("latest chapter " + chapNum + ", and link is " + chapUrl);
-		if(gPrefNovelList[novelIndex].latest !== chapNum){
-			console.log("New chapter of " + gPrefNovelList[novelIndex].name + " ref will be updated to :" + chapNum);
-			showNotif(gPrefNovelList[novelIndex].name, gPrefNovelList[novelIndex], "New chapter out " + chapNum);
-			gPrefNovelList[novelIndex].latest = chapNum;
-		} else {
-			console.log("We already have the lastest chapter: " + chapNum);
-			
+		if(input.showNotif && gPrefNovelList[input.index].latest !== chapNum){
+			console.log("New chapter of " + gPrefNovelList[input.index].name + " ref will be updated to :" + chapNum);
+			showNotif(gPrefNovelList[input.index].name, gPrefNovelList[input.index], "New chapter out " + chapNum);
+			gPrefNovelList[input.index].latest = chapNum;
 		}
 	}
-	gPrefNovelList[novelIndex].updated = true;
+	if(input.showNotif)
+		gPrefNovelList[input.index].updated = true;
 	if(gPrefNovelList.every(function (x){ return x.updated === true;})){
 		savePrefListToCache();
 	}
 }
 
+function getLastChapter(index, showNotif){
+	console.log("Checking for "+ gPrefNovelList[index].name + ", with ref: " + gPrefNovelList[index].latest);
+	var client = new HttpClient();
+	//Sending Asynchronous request to the server
+	client.get(gPrefNovelList[index].url, function(response, index){
+		latestChapterHttpResponse(response, {index: index, showNotif: showNotif});
+	}, index);	
+}
 function checkForLatestChapter(){
 	gPrefNovelList.forEach(function(x){ x.updated = false;});
 	console.log(gPrefNovelList);
 	for(index in gPrefNovelList){
-		console.log("Checking for "+ gPrefNovelList[index].name + ", with ref: " + gPrefNovelList[index].latest);
-		var client = new HttpClient();
-		//Sending Asynchronous request to the server
-		client.get(gPrefNovelList[index].url, function(response, index){
-			latestChapterHttpResponse(response, index);
-		}, index);	
+		getLastChapter(index, true);	
 	}
 }
+function init(){
+	retrieveNovelList();
+	checkNotifPremission();
+	var alarmInfo ={when: Date.now(), periodInMinutes: 5};
+	chrome.alarms.create("auto-check-update", alarmInfo);
+}
 
+function checkNotifPremission(){
+	
+}
 
 document.addEventListener('process_responses', function(){
-			gNovelList.sort(compareNovel);
+	gNovelList.sort(compareNovel);
+	console.log("pushing to main " + gNovelList.length);
+	chrome.runtime.sendMessage({type: "push-novel-list", content: gNovelList}, function(response) {
+	  console.log(response);
+	});
 }, false);
 
 chrome.notifications.onClicked.addListener(function (notificationId){
@@ -215,9 +226,14 @@ chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
 		switch(request.type){
 			case "get-novel-list":
-				console.log("length " + gNovelList.length);
+				console.log("gNovelList.length " + gNovelList.length);
 				if(gNovelList.length === 0)
 					retrieveNovelList();
+				sendResponse(gNovelList);
+				break;
+			case "refresh-novel-list":
+				gNovelList.length = 0;
+				retrieveNovelList();
 				sendResponse(gNovelList);
 				break;
 			case "get-favorite-list":
@@ -226,7 +242,10 @@ chrome.runtime.onMessage.addListener(
 				break;
 			case "addto-favorite-list":
 				console.log("adding " + request);
-				AddToPrefList(request.index);
+				if(!hasNovel(gNovelList[request.index], gPrefNovelList)){
+					AddToPrefList(request.index);
+					getLastChapter(gPrefNovelList.length - 1, false);
+				}
 				sendResponse(gPrefNovelList);
 				break;
 			case "clear-favorite-list":
@@ -244,26 +263,12 @@ chrome.runtime.onMessage.addListener(
 				break;
 			default:
 				alert("Request not supported " + request.type);
-				sendResponse();
 		}
   });
-  
-
-function init(){
-	retrieveNovelList();
-	checkNotifPremission();
-	var alarmInfo ={when: Date.now(), periodInMinutes: 5};
-	chrome.alarms.create("auto-check-update", alarmInfo);
-}
-
-function checkNotifPremission(){
-	
-}
 
 chrome.runtime.onStartup.addListener(function(){
 	console.log("I am started!");
 	retrievePrefListFromCache();
-	
 	init();
 });
 
@@ -276,5 +281,6 @@ chrome.alarms.onAlarm.addListener(function(alarm){
 	if(alarm.name === "auto-check-update" ){
 		console.log("Alarm called!");
 		checkForLatestChapter();
+		gContentRetrieved.forEach(function(part, index, theArray){theArray[index] = 0});
 	}
 });
