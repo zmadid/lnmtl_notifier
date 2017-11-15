@@ -164,9 +164,10 @@ function latestChapterHttpResponse(response, input){
 		var chapUrl = latest.getElementsByTagName('a')[0].getAttribute('href');
 		
 		console.log("latest chapter " + chapNum + ", and link is " + chapUrl);
-		if(input.showNotif && gPrefNovelList[input.index].latest !== chapNum){
+		if(gPrefNovelList[input.index].latest !== chapNum){
 			console.log("New chapter of " + gPrefNovelList[input.index].name + " ref will be updated to :" + chapNum);
-			showNotif(gPrefNovelList[input.index].name, gPrefNovelList[input.index], "New chapter out " + chapNum);
+			if(input.showNotif)
+				showNotif(gPrefNovelList[input.index].name, gPrefNovelList[input.index], "New chapter out " + chapNum);
 			gPrefNovelList[input.index].latest = chapNum;
 		}
 	}
