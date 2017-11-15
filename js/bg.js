@@ -7,6 +7,8 @@ function NovelInfo (aName, aUrl){
 	this.url = aUrl;
 	this.img = "";
 	this.latest = "";
+	this.latestUrl="";
+	this.latestTitle="";
 	this.updated = false;
 	this.fillFromMedia = function(mediaInfo){
 		// A sample of mediaInfo is available in ../miscellaneous/media.xml
@@ -162,6 +164,7 @@ function latestChapterHttpResponse(response, input){
 		var latest = medias[0].getElementsByTagName('table')[0].getElementsByTagName('tr')[0].getElementsByTagName('td')[0];
 		var chapNum = latest.getElementsByTagName('span')[0].innerHTML;
 		var chapUrl = latest.getElementsByTagName('a')[0].getAttribute('href');
+		var chapTitle = latest.getElementsByTagName('a')[0].innerText;
 		
 		console.log("latest chapter " + chapNum + ", and link is " + chapUrl);
 		if(gPrefNovelList[input.index].latest !== chapNum){
@@ -169,6 +172,8 @@ function latestChapterHttpResponse(response, input){
 			if(input.showNotif)
 				showNotif(gPrefNovelList[input.index].name, gPrefNovelList[input.index], "New chapter out " + chapNum);
 			gPrefNovelList[input.index].latest = chapNum;
+			gPrefNovelList[input.index].latestUrl = chapUrl;
+			gPrefNovelList[input.index].latestTitle = chapTitle;
 		}
 	}
 	if(input.showNotif)

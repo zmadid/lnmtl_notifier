@@ -82,9 +82,16 @@ function displayPrefList(gPrefNovelList){
 		
 		var td_2 = document.createElement('td');
 		var novel_link = document.createElement('a');
-		novel_link.innerHTML = "view";
-		novel_link.setAttribute('href', gPrefNovelList[i].url);
-		novel_link.setAttribute('title', 'novel link');
+		if(gPrefNovelList[i].latest !== ""){
+			novel_link.innerHTML = gPrefNovelList[i].latest;
+			novel_link.setAttribute('href', gPrefNovelList[i].latestUrl);
+			novel_link.setAttribute('title', gPrefNovelList[i].latestTitle);
+		} else {
+			novel_link.innerHTML = 'view';
+			novel_link.setAttribute('href', gPrefNovelList[i].url);
+			novel_link.setAttribute('title', 'link to novel');
+		}
+		
 		td_2.appendChild(novel_link);
 		
 		var td_3 = document.createElement('td');
