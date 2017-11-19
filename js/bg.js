@@ -1,6 +1,7 @@
 gNovelList = [];
 gContentRetrieved = [0,0,0,0,0,0,0,0,0,0];
 gPrefNovelList = [];
+gAlarmFrequency = {active: true, frequency: 15};
 
 function NovelInfo (aName, aUrl){
 	this.name = aName;
@@ -41,16 +42,26 @@ function getNovelIndex(name, novelList){
 
 }
 
+function getLocalTime(){
+	var date = new Date();
+	
+	var time = 	("0" + date.getHours()).slice(-2) + ":" +
+				("0" + date.getMinutes()).slice(-2) + ":" + 
+				("0" + date.getSeconds()).slice(-2) + "  ";
+	return time;
+}
+
 function showNotif(id, novelInfo, message){
+	console.log(getLocalTime() + "Notification should be displayed");
 	var opt = {
 		  type: "basic",
 		  title: novelInfo.name,
 		  message: message,
 		  iconUrl: novelInfo.img,
-		  isClickable: true,
+		  isClickable: false,
 		  requireInteraction: true
 		}
-	notif = chrome.notifications.create( id ,opt);
+	notif = chrome.notifications.create(id, opt);
 }
 
 // An wrapper to perform HTTP request
@@ -109,6 +120,28 @@ function AddToPrefList(index){
 	savePrefListToCache();
 }
 
+function saveAlarmFrequency(){
+	chrome.storage.local.set({"alarmFrequency": gAlarmFrequency}, function(){
+		console.log("gAlarmFrequency saved to cache " + gAlarmFrequency);
+		for(var name in gAlarmFrequency) {
+			console.log( name + ':' + gAlarmFrequency[name]);
+		}
+	});
+}
+
+function retrieveAlarmFrequencyFromCache(){
+	chrome.storage.local.get('alarmFrequency', function (result) {
+		for(var nov in result){
+			gAlarmFrequency = result[nov];
+		}
+		console.log("gAlarmFrequency retrieved from cache " + gAlarmFrequency.frequency);
+		createAlarm();
+	});
+}
+
+function clearAlarmFrequency(){
+	chrome.storage.local.remove('alarmFrequency');
+}
 function savePrefListToCache(){
 	//console.log("savePrefListToCache");
 	// Put the object into storage
@@ -201,12 +234,34 @@ function checkForLatestChapter(){
 function init(){
 	retrieveNovelList();
 	checkNotifPremission();
-	var alarmInfo ={when: Date.now(), periodInMinutes: 5};
-	chrome.alarms.create("auto-check-update", alarmInfo);
+	
 }
 
 function checkNotifPremission(){
 	
+}
+
+function createAlarm(){
+	if(gAlarmFrequency.active){
+		var alarmInfo ={when: Date.now(), periodInMinutes: gAlarmFrequency.frequency};
+		chrome.alarms.create("auto-check-update", alarmInfo);
+	}
+}
+function enableAutoCheck(input){
+	gAlarmFrequency.active = true;
+	gAlarmFrequency.frequency = parseInt(input);
+	createAlarm();
+	saveAlarmFrequency(gAlarmFrequency);
+}
+
+function disableAutoCheck(){
+	gAlarmFrequency.active = false;
+	gAlarmFrequency.frequency = 15;
+	
+	chrome.alarms.clear("auto-check-update", function(wasCleared){
+		console.log("Alarm was cleared:" + wasCleared);
+	});
+	saveAlarmFrequency();
 }
 
 document.addEventListener('process_responses', function(){
@@ -267,6 +322,19 @@ chrome.runtime.onMessage.addListener(
 				checkForLatestChapter();
 				sendResponse();
 				break;
+			case "get-refresh-frequency":
+				sendResponse(gAlarmFrequency);
+				break;
+			case "enable-auto-check":
+				console.log("Automated check enabled with frequency " + request.frequency);
+				enableAutoCheck(request.frequency);
+				sendResponse(gAlarmFrequency);
+				break;
+			case "disable-auto-check":
+				console.log("Automated check disabled");
+				disableAutoCheck();
+				sendResponse(gAlarmFrequency);
+				break;
 			default:
 				alert("Request not supported " + request.type);
 		}
@@ -275,17 +343,20 @@ chrome.runtime.onMessage.addListener(
 chrome.runtime.onStartup.addListener(function(){
 	console.log("I am started!");
 	retrievePrefListFromCache();
+	retrieveAlarmFrequencyFromCache();
 	init();
 });
 
 chrome.runtime.onInstalled.addListener(function(){
-	console.log("I am installed!");
+	console.log(getLocalTime() + "I am installed!");
+	savePrefListToCache();
+	saveAlarmFrequency();
 	init();
 });
 
 chrome.alarms.onAlarm.addListener(function(alarm){
 	if(alarm.name === "auto-check-update" ){
-		console.log("Alarm called!");
+		console.log(getLocalTime() + "Alarm called!");
 		checkForLatestChapter();
 		gContentRetrieved.forEach(function(part, index, theArray){theArray[index] = 0});
 	}

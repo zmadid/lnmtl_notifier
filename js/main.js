@@ -97,7 +97,7 @@ function displayPrefList(gPrefNovelList){
 		var td_3 = document.createElement('td');
 		td_3.setAttribute('class', 'pure-button');
 		td_3.setAttribute('title', 'Remove from favorite');
-		td_3.innerHTML = '<i class="fa fa-eraser" aria-hidden="true"></i> remove';
+		td_3.innerHTML = '<i class="fa fa-trash-o" aria-hidden="true"></i> remove';
 		
 		
 		td_3.addEventListener("click", clearNovel, true);
@@ -162,17 +162,61 @@ function hideAllTabs(){
 		tabs[i].setAttribute('style', 'display: none;');
 	}
 }
+
+function displayRefreshFrequency(input){
+	var slider = document.getElementById("myRange");
+	slider.value = input.frequency;
+
+	var output = document.getElementById("frequency");
+	output.innerHTML = input.frequency;
+	if(input.active){
+		showDisabledAutorefresh();
+	} else {
+		showEnabledAutorefresh();
+	}
+	slider.oninput = function() {
+	output.innerHTML = this.value;
+	}
+}
+
+function showEnabledAutorefresh(){
+	document.getElementById("disable-auto-refresh").setAttribute('style', 'display: none;');
+	document.getElementById("enable-auto-refresh").setAttribute('style', '');
+}
+
+function showDisabledAutorefresh(){
+	document.getElementById("enable-auto-refresh").setAttribute('style', 'display: none;');
+	document.getElementById("disable-auto-refresh").setAttribute('style', '');
+}
+
+function getRefreshFrequency(){
+	chrome.runtime.sendMessage({type: "get-refresh-frequency"}, function(response) {
+		console.log("refresh-frequency: " + response);
+		displayRefreshFrequency(response);
+	});
+
+}
+
+function enableAutoRefresh(){
+	var value = document.getElementById("myRange").value;
+	chrome.runtime.sendMessage({type: "enable-auto-check", frequency: value}, function(response) {
+		displayRefreshFrequency(response);
+	});
+}
+
+function disableAutoRefresh(){
+	var value = document.getElementById("myRange").value;
+	chrome.runtime.sendMessage({type: "disable-auto-check"}, function(response) {
+		displayRefreshFrequency(response);
+	});
+}
+
 function start() {
     console.log("DOM fully loaded and parsed");
 	var info = { name: "main"};
 	getNovelList();
-	getFavoriteList();	
-	
-	document.getElementById("refresh").addEventListener("click", refreshNovelList , true);
-	
-	document.getElementById("clear").addEventListener("click", clearFavoriteList , true);
-	
-	document.getElementById("check").addEventListener("click", checkUpdate, true);
+	getFavoriteList();
+	getRefreshFrequency();
 	
 	document.getElementById("display-help").addEventListener("click", function(){
 		hideAllTabs();
@@ -182,6 +226,21 @@ function start() {
 		hideAllTabs();
 		document.getElementById('lnmtl-novel').setAttribute('style', '');
 		}, true);
+	
+	document.getElementById("display-settings").addEventListener("click", function(){
+		hideAllTabs();
+		document.getElementById('settings').setAttribute('style', '');
+		}, true);
+		
+	document.getElementById("refresh").addEventListener("click", refreshNovelList , true);
+	
+	document.getElementById("clear").addEventListener("click", clearFavoriteList , true);
+	
+	document.getElementById("check").addEventListener("click", checkUpdate, true);
+	
+	document.getElementById("enable-auto-refresh").addEventListener("click", enableAutoRefresh , true);
+	
+	document.getElementById("disable-auto-refresh").addEventListener("click", disableAutoRefresh , true);
 	
 };
 

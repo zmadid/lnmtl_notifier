@@ -35,14 +35,53 @@ html {
     max-height: 500px;
     height: 100%;
 }
+
+#slidecontainer {
+    width: 120px;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 23px;
+    height: 24px;
+    border-radius: 50%; 
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 23px;
+    height: 24px;
+    border-radius: 50%; 
+    background: #4CAF50;
+    cursor: pointer;
+}
 </style>
 </head>
 <body>
 <script src="js/main.js"></script>
 
 <div class="tab">
-  <button id="display-novels" class="pure-button">lnmtl novels</button>
-  <button id="display-help"class="pure-button">help</button>
+  <button id="display-novels" class="pure-button"><i class="fa fa-book" aria-hidden="true"></i> lnmtl novels</button>
+  <button id="display-settings"class="pure-button"><i class="fa fa-cog" aria-hidden="true"></i> Settings</button>
+  <button id="display-help"class="pure-button"><i class="fa fa-info" aria-hidden="true"></i> Help</button>
 </div>
 
 <div id="lnmtl-novel" class="tab-content">
@@ -58,11 +97,11 @@ html {
 		<div id="pref-novel">
 		</div>
 		<div id="actions"> 
-			<div id="check" class="pure-button button-add" title="Check for updates"> 
+			<div id="check" class="pure-button button-add" title="Force check for updates now"> 
 				<i class="fa fa-refresh" aria-hidden="true"></i> Check </div>
 			<div id="clear" class="pure-button button-clear"title="Clear all favorite"> <i class="fa fa-times" aria-hidden="true"></i> Clear </div>
-		</div>
-		
+		</div>	
+
 	</div>
 </div>
 
@@ -70,6 +109,18 @@ html {
 	<div>1. Select the novel </div>
 	<div>2. Add the novel to your favorite list</div>
 	<div>3. Get a window's notification if a new chapter has been released in the last 5 min.</div>
+</div>
+
+<div id="settings" class="tab-content" style="display: none;">
+	<h3> Refresh frequency </h3>
+	<div id="slidecontainer">
+		<input type="range" min="1" max="100" value="15" class="slider" id="myRange">
+		<p>Check for new chapter every: <span id="frequency">(default) 15</span> min</p>
+	</div>
+	<div id="enable-auto-refresh" class="pure-button button-add" title="Enable automated update check"> 
+		<i class="fa fa-bell" aria-hidden="true"></i> Enable </div>
+	<div id="disable-auto-refresh" class="pure-button button-clear"title="Disable automated update check"> 
+		<i class="fa fa-bell-slash" aria-hidden="true"></i> Disable </div>
 </div>
 
 </body>
