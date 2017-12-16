@@ -58,7 +58,8 @@ function showNotif(id, novelInfo, message){
 		  title: novelInfo.name,
 		  message: message,
 		  iconUrl: novelInfo.img,
-		  isClickable: false,
+		  priority: 2,
+		  isClickable: true,
 		  requireInteraction: true
 		}
 	notif = chrome.notifications.create(id, opt);
@@ -234,7 +235,7 @@ function checkForLatestChapter(){
 function init(){
 	retrieveNovelList();
 	checkNotifPremission();
-	
+	createAlarm();
 }
 
 function checkNotifPremission(){
@@ -256,7 +257,6 @@ function enableAutoCheck(input){
 
 function disableAutoCheck(){
 	gAlarmFrequency.active = false;
-	gAlarmFrequency.frequency = 15;
 	
 	chrome.alarms.clear("auto-check-update", function(wasCleared){
 		console.log("Alarm was cleared:" + wasCleared);
@@ -319,6 +319,7 @@ chrome.runtime.onMessage.addListener(
 				clearNovel(request.index);
 				sendResponse(gPrefNovelList);
 			case "check-update":
+				console.log(getLocalTime() + "Manual check");
 				checkForLatestChapter();
 				sendResponse();
 				break;
