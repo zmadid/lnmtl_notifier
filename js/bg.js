@@ -1,7 +1,8 @@
 gNovelList = [];
-gContentRetrieved = [0,0,0,0,0,0,0,0,0,0];
+gContentRetrieved = [0,0,0,0,0,0,0,0];
 gPrefNovelList = [];
 gAlarmFrequency = {active: true, frequency: 15};
+gUrlNovelList = "https://lnmtl.com/novel?orderBy=name&order=asc&filter=ongoing&page="
 
 function NovelInfo (aName, aUrl){
 	this.name = aName;
@@ -11,7 +12,7 @@ function NovelInfo (aName, aUrl){
 	this.latestUrl="";
 	this.latestTitle="";
 	this.updated = false;
-	this.fillFromMedia = function(mediaInfo){
+	this.parseMediaInfo = function(mediaInfo){
 		// A sample of mediaInfo is available in ../miscellaneous/media.xml
 		this.name = mediaInfo.getElementsByTagName('a')[1].innerHTML;
 		this.url = mediaInfo.getElementsByTagName('a')[1].getAttribute('href');
@@ -81,15 +82,18 @@ function HttpClient () {
 	}
 }
 
-function processHttpResponse(response, param){
+function parseNovelList(response, param){
 	//console.log("Response retrieved");
 	var el = document.createElement('html');
 	el.innerHTML = response;
-	var medias = el.getElementsByClassName( 'col-lg-6 col-md-6' );
+	var main = el.getElementsByTagName('main')[0];
+	var container = main.getElementsByClassName('container')[1];
+	var medias = container.getElementsByClassName('media');
+	
 	for( var i = 0, l = medias.length; i < l;  ++i){
 		var mediaInfo = medias[i];
 		var opt = new NovelInfo();
-		opt.fillFromMedia(mediaInfo);
+		opt.parseMediaInfo(mediaInfo);
 		gNovelList.push(opt);
 	}
 	gContentRetrieved[param-1] = 1;
@@ -107,9 +111,10 @@ function retrieveNovelList(){
 	console.log(gContentRetrieved);
 	var client = new HttpClient();
 	//Sending Asynchronous request to the server
-	for(var pageNum = 1; pageNum < 11 ; ++pageNum){
-		client.get("https://lnmtl.com/novel?orderBy=name&order=asc&page=" + pageNum, function(response, pageNum){
-			processHttpResponse(response, pageNum);
+	var maxPages = gContentRetrieved.length + 1;
+	for(var pageNum = 1; pageNum < maxPages ; ++pageNum){
+		client.get(gUrlNovelList + pageNum, function(response, pageNum){
+			parseNovelList(response, pageNum);
 		}, pageNum);
 	}
 }
@@ -285,6 +290,7 @@ chrome.notifications.onClicked.addListener(function (notificationId){
 
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
+		console.log(getLocalTime() + "call for " + request.type);
 		switch(request.type){
 			case "get-novel-list":
 				console.log("gNovelList.length " + gNovelList.length);
